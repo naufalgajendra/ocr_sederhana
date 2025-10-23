@@ -6,6 +6,7 @@ import 'result_screen.dart';
 
 late List<CameraDescription> cameras;
 
+/// ScanScreen - Halaman untuk mengambil foto dan melakukan OCR
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
 
@@ -24,6 +25,7 @@ class _ScanScreenState extends State<ScanScreen> {
     _initCamera();
   }
 
+  /// Inisialisasi kamera saat pertama kali masuk halaman
   Future<void> _initCamera() async {
     try {
       cameras = await availableCameras();
@@ -64,6 +66,7 @@ class _ScanScreenState extends State<ScanScreen> {
     super.dispose();
   }
 
+  /// Melakukan OCR dari file gambar menggunakan ML Kit
   Future<String> _ocrFromFile(File imageFile) async {
     final inputImage = InputImage.fromFile(imageFile);
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
@@ -73,6 +76,7 @@ class _ScanScreenState extends State<ScanScreen> {
     return recognizedText.text;
   }
 
+  /// Mengambil foto dan memproses OCR
   Future<void> _takePicture() async {
     if (_controller == null || !_controller!.value.isInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -108,10 +112,11 @@ class _ScanScreenState extends State<ScanScreen> {
     } catch (e) {
       if (!mounted) return;
       
+      // PERUBAHAN: Pesan error lebih user-friendly tanpa detail teknis
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          duration: const Duration(seconds: 3),
+        const SnackBar(
+          content: Text('Pemindaian Gagal! Periksa Izin Kamera atau coba lagi.'),
+          duration: Duration(seconds: 3),
         ),
       );
     }
@@ -127,7 +132,9 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
+  /// Membangun tampilan body sesuai state (error, loading, atau ready)
   Widget _buildBody() {
+    // Tampilan jika ada error
     if (_errorMessage != null) {
       return Center(
         child: Column(
@@ -156,24 +163,43 @@ class _ScanScreenState extends State<ScanScreen> {
       );
     }
 
+    // PERUBAHAN: Tampilan loading dengan styling baru
+    // Background gelap dengan indikator kuning dan teks putih
     if (!_isInitialized || _controller == null) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Menginisialisasi kamera...'),
-          ],
+      return Scaffold(
+        // Background abu gelap
+        backgroundColor: Colors.grey[900],
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // CircularProgressIndicator dengan warna kuning
+              const CircularProgressIndicator(
+                color: Colors.yellow,
+              ),
+              const SizedBox(height: 16),
+              // Teks loading dengan warna putih dan ukuran 18
+              const Text(
+                'Memuat Kamera... Harap tunggu.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
+    // Tampilan kamera siap digunakan
     return Column(
       children: [
+        // Preview kamera memenuhi layar
         Expanded(
           child: CameraPreview(_controller!),
         ),
+        // Tombol untuk ambil foto dan scan
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: ElevatedButton.icon(
